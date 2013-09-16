@@ -123,11 +123,16 @@ func watch(dir string) {
 	}
 
 	walker := func(path string, fileInfo os.FileInfo, err error) error {
-		if err == nil && fileInfo.IsDir() {
+		if err != nil {
+			return nil
+		}
+
+		if fileInfo.IsDir() {
 			if err = watcher.WatchFlags(path, watchFlags); err == nil {
 				watched[path] = emptyStruct
 			}
 		}
+
 		return err
 	}
 
