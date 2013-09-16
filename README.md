@@ -1,7 +1,7 @@
 glitch
 ======
 
-Automatically, build, test, vet and install your go package.
+Continuously and automatically, build, test, vet and install your go package.
 
 Status
 ------
