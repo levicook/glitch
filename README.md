@@ -46,3 +46,9 @@ When something fails, like `go build`, you'll see less output. eg:
 # github.com/levicook/glitch
 ./main.go:83: syntax error: unexpected semicolon or newline, expecting )
 ```
+
+There's nothing generic about this tool. It encapsulates a specific workflow and only
+pays attention to .go files. If you want something different, use something totally
+generic like guard. You're welcome to fork this, but I am unlikely to merge pull requests
+looking for a different and/or pluggable behavior.
+
