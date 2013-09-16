@@ -29,9 +29,9 @@ var (
 	buildQueued = false
 )
 
-func fatalIf(err error) {
+func panicIf(err error) {
 	if err != nil {
-		log.Fatal(err)
+		panic(err)
 	}
 }
 
@@ -94,7 +94,7 @@ func handleCreate(path string) {
 
 func handleDelete(path string) {
 	if _, watching := watched[path]; watching {
-		fatalIf(watcher.RemoveWatch(path))
+		panicIf(watcher.RemoveWatch(path))
 		delete(watched, path)
 	}
 	maybeQueueBuild(path)
@@ -131,7 +131,7 @@ func watch(dir string) {
 		return err
 	}
 
-	fatalIf(filepath.Walk(dir, walker))
+	panicIf(filepath.Walk(dir, walker))
 }
 
 func periodicallyLogWatchedPaths() {
@@ -163,7 +163,7 @@ func runEventLoop() {
 		case ev := <-watcher.Event:
 			handleEvent(ev)
 		case err := <-watcher.Error:
-			fatalIf(err)
+			panicIf(err)
 		}
 	}
 }
@@ -183,11 +183,11 @@ func runBuildLoop() {
 
 func main() {
 	wd, err := os.Getwd()
-	fatalIf(err)
+	panicIf(err)
 	rootPath = wd
 
 	w, err := fsnotify.NewWatcher()
-	fatalIf(err)
+	panicIf(err)
 	watcher = w
 	defer watcher.Close()
 
