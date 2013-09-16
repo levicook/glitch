@@ -69,8 +69,18 @@ func build() {
 		}
 	}
 
-	log.Println("glitch: test OK - finished, wating for next build")
-	log.Println()
+	{
+		log.Println("glitch: test OK - installing")
+		cmd := exec.Command("go", "install")
+		cmd.Stdout = os.Stdout
+		cmd.Stderr = os.Stderr
+		cmd.Dir = rootPath
+		if err := cmd.Run(); err != nil {
+			return
+		}
+	}
+
+	log.Println("glitch: install OK - wating for next build event")
 }
 
 func maybeQueueBuild(path string) {
