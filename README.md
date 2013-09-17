@@ -13,12 +13,21 @@ working well in practice, so I'm not worrying about it for now.
 
 Use at your own risk, but let me know if it's abusing your system somehow.
 
+Installation
+------------
+
+```shell
+go get -u github.com/levicook/glitch
+go install github.com/levicook/glitch
+```
+
 Usage
 -----
 
+Make sure $GOPATH/bin is on your PATH, then simply:
+
 ```shell
-go install github.com/levicook/glitch
-cd <your go package root>
+cd <your go package>
 glitch
 ```
 
