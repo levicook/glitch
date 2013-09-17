@@ -94,7 +94,7 @@ func handleCreate(path string) {
 
 func handleDelete(path string) {
 	if _, watching := watched[path]; watching {
-		panicIf(watcher.RemoveWatch(path))
+		_ = watcher.RemoveWatch(path)
 		delete(watched, path)
 	}
 	maybeQueueBuild(path)
@@ -136,7 +136,7 @@ func watch(dir string) {
 		return err
 	}
 
-	panicIf(filepath.Walk(dir, walker))
+	_ = filepath.Walk(dir, walker)
 }
 
 func periodicallyLogWatchedPaths() {
