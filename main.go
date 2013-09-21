@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"os"
 	"os/exec"
@@ -25,6 +26,8 @@ var (
 
 	emptyStruct = struct{}{}
 	hasSuffix   = strings.HasSuffix
+	contains    = strings.Contains
+	sprintf     = fmt.Sprintf
 
 	buildQueued = false
 )
@@ -117,13 +120,23 @@ func handleEvent(ev *fsnotify.FileEvent) {
 	}
 }
 
+var (
+	gitSuffix   = sprintf("%v.git", string(filepath.Separator))
+	gitContains = sprintf("%v%v", gitSuffix, string(filepath.Separator))
+)
+
 func watch(dir string) {
+
 	if _, watching := watched[dir]; watching {
 		return
 	}
 
 	walker := func(path string, fileInfo os.FileInfo, err error) error {
 		if err != nil {
+			return nil
+		}
+
+		if hasSuffix(path, gitSuffix) || contains(path, gitContains) {
 			return nil
 		}
 
@@ -147,6 +160,7 @@ func periodicallyLogWatchedPaths() {
 		}
 	}
 
+	logWatchedPaths()
 	for _ = range time.Tick(5 * time.Second) {
 		logWatchedPaths()
 	}
@@ -157,6 +171,7 @@ func periodicallyLogBuildStatus() {
 		log.Println("glitch: buildQueued:", buildQueued)
 	}
 
+	logBuildStatus()
 	for _ = range time.Tick(300 * time.Millisecond) {
 		logBuildStatus()
 	}
