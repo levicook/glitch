@@ -38,7 +38,12 @@ func panicIf(err error) {
 	}
 }
 
+func clearScrollBuffer() {
+	print("\033c")
+}
+
 func build() {
+
 	{
 		log.Println("glitch: building")
 		cmd := exec.Command("go", "build")
@@ -192,6 +197,7 @@ func runBuildLoop() {
 	consumeBuildQueue := func() {
 		if buildQueued {
 			buildQueued = false
+			clearScrollBuffer()
 			build()
 		}
 	}
