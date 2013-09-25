@@ -88,7 +88,7 @@ func build() {
 		}
 	}
 
-	log.Println("glitch: install OK - wating for next build event")
+	log.Println("glitch: install OK - waiting for next build event")
 }
 
 func maybeQueueBuild(path string) {
