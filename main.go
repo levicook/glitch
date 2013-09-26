@@ -43,47 +43,42 @@ func clearScrollBuffer() {
 }
 
 func build() {
-
-	{
-		log.Println("glitch: building")
-		cmd := exec.Command("go", "build")
+	newCmd := func(name string, args ...string) *exec.Cmd {
+		cmd := exec.Command(name, args...)
 		cmd.Stdout = os.Stdout
 		cmd.Stderr = os.Stderr
 		cmd.Dir = rootPath
-		if err := cmd.Run(); err != nil {
+		return cmd
+	}
+
+	runCmd := func(name string, args ...string) error {
+		return newCmd(name, args...).Run()
+	}
+
+	{
+		log.Println("glitch: building")
+		if err := runCmd("go", "build"); err != nil {
 			return
 		}
 	}
 
 	{
 		log.Println("glitch: build OK - vetting")
-		cmd := exec.Command("go", "vet", "./...")
-		cmd.Stdout = os.Stdout
-		cmd.Stderr = os.Stderr
-		cmd.Dir = rootPath
-		if err := cmd.Run(); err != nil {
+		if err := runCmd("go", "vet", "./..."); err != nil {
 			return
 		}
 	}
 
 	{
 		log.Println("glitch: vet OK - testing")
-		cmd := exec.Command("go", "test", "./...")
-		cmd.Stdout = os.Stdout
-		cmd.Stderr = os.Stderr
-		cmd.Dir = rootPath
-		if err := cmd.Run(); err != nil {
+		if err := runCmd("go", "test", "./..."); err != nil {
 			return
 		}
 	}
 
 	{
 		log.Println("glitch: test OK - installing")
-		cmd := exec.Command("go", "install")
-		cmd.Stdout = os.Stdout
-		cmd.Stderr = os.Stderr
-		cmd.Dir = rootPath
-		if err := cmd.Run(); err != nil {
+		if err := runCmd("go", "install"); err != nil {
 			return
 		}
 	}
