@@ -56,8 +56,15 @@ func build() {
 	}
 
 	{
+		log.Println("glitch: formatting")
+		if err := runCmd("go", "fmt", "./..."); err != nil {
+			return
+		}
+	}
+
+	{
 		log.Println("glitch: building")
-		if err := runCmd("go", "build"); err != nil {
+		if err := runCmd("go", "build", "./..."); err != nil {
 			return
 		}
 	}
