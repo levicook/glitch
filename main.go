@@ -154,17 +154,6 @@ func periodicallyLogWatchedPaths() {
 	}
 }
 
-func periodicallyLogBuildStatus() {
-	logBuildStatus := func() {
-		log.Println("glitch: buildQueued:", buildQueued)
-	}
-
-	logBuildStatus()
-	for _ = range time.Tick(300 * time.Millisecond) {
-		logBuildStatus()
-	}
-}
-
 func runEventLoop() {
 	for {
 		select {
@@ -201,7 +190,6 @@ func main() {
 	defer watcher.Close()
 
 	//go periodicallyLogWatchedPaths()
-	//go periodicallyLogBuildStatus()
 	go runEventLoop()
 	go runBuildLoop()
 
