@@ -61,3 +61,8 @@ pays attention to .go files. If you want something different, use something tota
 generic like guard. You're welcome to fork this, but I am unlikely to merge pull requests
 looking for a different and/or pluggable behavior.
 
+
+Known Issues
+------------
+Not a glitch issue per se; OSX users frequently see: too many open files
+http://superuser.com/questions/433746/is-there-a-fix-for-the-too-many-open-files-in-system-error-on-os-x-10-7-1
