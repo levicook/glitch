@@ -140,6 +140,17 @@ func watch(dir string) {
 	_ = filepath.Walk(dir, walker)
 }
 
+func periodicallyLogWatchedCount() {
+	logWatchedCount := func() {
+		log.Printf("glitch: watching: %v paths", len(watched))
+	}
+
+	logWatchedCount()
+	for _ = range time.Tick(5 * time.Second) {
+		logWatchedCount()
+	}
+}
+
 func periodicallyLogWatchedPaths() {
 	logWatchedPaths := func() {
 		log.Printf("glitch: watching: %v paths", len(watched))
@@ -190,6 +201,7 @@ func main() {
 	defer watcher.Close()
 
 	//go periodicallyLogWatchedPaths()
+	//go periodicallyLogWatchedCount()
 	go runEventLoop()
 	go runBuildLoop()
 
