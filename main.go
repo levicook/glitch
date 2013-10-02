@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"log"
 	"os"
@@ -28,6 +29,9 @@ var (
 	hasSuffix   = strings.HasSuffix
 	contains    = strings.Contains
 	sprintf     = fmt.Sprintf
+	printf      = log.Printf
+
+	onAppEngine bool
 
 	buildQueued = true
 )
@@ -42,15 +46,29 @@ func clearScrollBuffer() {
 	print("\033c")
 }
 
-func build() {
-	runCmd := func(name string, args ...string) error {
-		cmd := exec.Command(name, args...)
-		cmd.Stdout = os.Stdout
-		cmd.Stderr = os.Stderr
-		cmd.Dir = rootPath
-		return cmd.Run()
+func runCmd(name string, args ...string) error {
+	cmd := exec.Command(name, args...)
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	cmd.Dir = rootPath
+	return cmd.Run()
+}
+
+func doAppEngineBuild() {
+	log.Println("glitch: building")
+	if err := runCmd("goapp", "build", "./..."); err != nil {
+		return
 	}
 
+	log.Println("glitch: build OK - testing")
+	if err := runCmd("goapp", "test", "./..."); err != nil {
+		return
+	}
+
+	log.Println("glitch: test OK - waiting for next build event")
+}
+
+func doStandardBuild() {
 	log.Println("glitch: building")
 	if err := runCmd("go", "build", "./..."); err != nil {
 		return
@@ -66,12 +84,7 @@ func build() {
 		return
 	}
 
-	log.Println("glitch: test OK - installing")
-	if err := runCmd("go", "install"); err != nil {
-		return
-	}
-
-	log.Println("glitch: install OK - waiting for next build event")
+	log.Println("glitch: test OK - waiting for next build event")
 }
 
 func maybeQueueBuild(path string) {
@@ -181,7 +194,11 @@ func runBuildLoop() {
 		if buildQueued {
 			buildQueued = false
 			clearScrollBuffer()
-			build()
+			if onAppEngine {
+				doAppEngineBuild()
+			} else {
+				doStandardBuild()
+			}
 		}
 	}
 
@@ -191,6 +208,9 @@ func runBuildLoop() {
 }
 
 func main() {
+	flag.BoolVar(&onAppEngine, "appengine", false, "on appengine")
+	flag.Parse()
+
 	wd, err := os.Getwd()
 	panicIf(err)
 	rootPath = wd

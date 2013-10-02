@@ -1,7 +1,7 @@
 glitch
 ======
 
-Continuously and automatically, build, test, vet and install your go package.
+Continuously and automatically, build, test, and vet your go package.
 
 Status
 ------
@@ -34,7 +34,7 @@ glitch
 Behavior
 --------
 
-glitch will `go build`, `go vet ./...`, `go test ./...` and `go install` your go package.
+glitch will `go build`, `go vet ./...` and `go test ./...` your go package.
 If any one of these steps fail, it stops on that step, and waits for you to fix the issue.
 
 When things go well, your output should look like this: 
@@ -44,8 +44,7 @@ When things go well, your output should look like this:
 2013/09/15 20:38:07 glitch: build OK - vetting
 2013/09/15 20:38:07 glitch: vet OK - testing
 ?       github.com/levicook/glitch      [no test files]
-2013/09/15 20:38:07 glitch: test OK - installing
-2013/09/15 20:38:08 glitch: install OK - wating for next build event
+2013/09/15 20:38:08 glitch: test OK - wating for next build event
 ```
 
 When something fails, like `go build`, you'll see less output. eg:
