@@ -29,7 +29,7 @@ var (
 	contains    = strings.Contains
 	sprintf     = fmt.Sprintf
 
-	buildQueued = false
+	buildQueued = true
 )
 
 func panicIf(err error) {
