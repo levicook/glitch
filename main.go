@@ -31,7 +31,8 @@ var (
 	sprintf     = fmt.Sprintf
 	printf      = log.Printf
 
-	onAppEngine bool
+	onAppEngine  bool
+	touchOnAllOK string
 
 	buildQueued = true
 )
@@ -85,6 +86,10 @@ func doStandardBuild() {
 	}
 
 	log.Println("glitch: test OK - waiting for next build event")
+
+	if len(touchOnAllOK) > 0 {
+		runCmd("touch", touchOnAllOK)
+	}
 }
 
 func maybeQueueBuild(path string) {
@@ -209,6 +214,7 @@ func runBuildLoop() {
 
 func main() {
 	flag.BoolVar(&onAppEngine, "appengine", false, "on appengine")
+	flag.StringVar(&touchOnAllOK, "touch-on-all-ok", "", "file to touch on all OK")
 	flag.Parse()
 
 	wd, err := os.Getwd()
