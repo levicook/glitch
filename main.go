@@ -31,8 +31,8 @@ var (
 	sprintf     = fmt.Sprintf
 	printf      = log.Printf
 
-	onAppEngine  bool
-	touchOnAllOK string
+	onAppEngine bool
+	afterAllOk  string
 
 	buildQueued = true
 )
@@ -87,8 +87,8 @@ func doStandardBuild() {
 
 	log.Println("glitch: test OK - waiting for next build event")
 
-	if len(touchOnAllOK) > 0 {
-		runCmd("touch", touchOnAllOK)
+	if len(afterAllOk) > 0 {
+		runCmd("bash", "-c", afterAllOk)
 	}
 }
 
@@ -214,7 +214,7 @@ func runBuildLoop() {
 
 func main() {
 	flag.BoolVar(&onAppEngine, "appengine", false, "on appengine")
-	flag.StringVar(&touchOnAllOK, "touch-on-all-ok", "", "file to touch on all OK")
+	flag.StringVar(&afterAllOk, "after-all-ok", "", "command to run after all OK")
 	flag.Parse()
 
 	wd, err := os.Getwd()
