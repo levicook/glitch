@@ -3,16 +3,6 @@ glitch
 
 Continuously and automatically, build, test, and vet your go package.
 
-Status
-------
-
-This was written quickly, and without tests. I was also learning
-how to use the fsnotify package. There are some fundamental / 
-obvious race conditions in the current version, however it's
-working well in practice, so I'm not worrying about it for now.
-
-Use at your own risk, but let me know if it's abusing your system somehow.
-
 Installation
 ------------
 
