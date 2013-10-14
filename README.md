@@ -34,7 +34,7 @@ glitch
 Behavior
 --------
 
-glitch will `go build`, `go vet ./...` and `go test ./...` your go package.
+glitch will `go build ./...`, `go vet ./...` and `go test ./...` your go package.
 If any one of these steps fail, it stops on that step, and waits for you to fix the issue.
 
 When things go well, your output should look like this: 
