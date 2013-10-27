@@ -33,6 +33,7 @@ var (
 
 	onAppEngine bool
 	afterAllOk  string
+	packages    string
 
 	buildQueued = true
 )
@@ -57,12 +58,12 @@ func runCmd(name string, args ...string) error {
 
 func doAppEngineBuild() {
 	log.Println("glitch: building")
-	if err := runCmd("goapp", "build", "./..."); err != nil {
+	if err := runCmd("goapp", "build", packages); err != nil {
 		return
 	}
 
 	log.Println("glitch: build OK - testing")
-	if err := runCmd("goapp", "test", "./..."); err != nil {
+	if err := runCmd("goapp", "test", packages); err != nil {
 		return
 	}
 
@@ -71,17 +72,17 @@ func doAppEngineBuild() {
 
 func doStandardBuild() {
 	log.Println("glitch: building")
-	if err := runCmd("go", "build", "./..."); err != nil {
+	if err := runCmd("go", "build", packages); err != nil {
 		return
 	}
 
 	log.Println("glitch: build OK - vetting")
-	if err := runCmd("go", "vet", "./..."); err != nil {
+	if err := runCmd("go", "vet", packages); err != nil {
 		return
 	}
 
 	log.Println("glitch: vet OK - testing")
-	if err := runCmd("go", "test", "./..."); err != nil {
+	if err := runCmd("go", "test", packages); err != nil {
 		return
 	}
 
@@ -215,6 +216,7 @@ func runBuildLoop() {
 func main() {
 	flag.BoolVar(&onAppEngine, "appengine", false, "on appengine")
 	flag.StringVar(&afterAllOk, "after-all-ok", "", "command to run after all OK")
+	flag.StringVar(&packages, "packages", "./...", "packages to test")
 	flag.Parse()
 
 	wd, err := os.Getwd()
