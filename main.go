@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/howeyc/fsnotify"
+	"github.com/levicook/go-detect"
 )
 
 const (
@@ -26,16 +27,23 @@ var (
 	rootPath string
 
 	emptyStruct = struct{}{}
-	hasSuffix   = strings.HasSuffix
-	contains    = strings.Contains
-	sprintf     = fmt.Sprintf
-	printf      = log.Printf
 
-	onAppEngine bool
-	afterAllOk  string
-	packages    string
+	hasSuffix = strings.HasSuffix
+	contains  = strings.Contains
+
+	sprintf = fmt.Sprintf
+	errorf  = fmt.Errorf
+
+	printf = log.Printf
+
+	afterAllOk string
+	afterNotOk string
 
 	buildQueued = true
+
+	buildArgs = detect.String(os.Getenv("BUILD_ARGS"), "./...")
+	vetArgs   = detect.String(os.Getenv("VET_ARGS"), "./...")
+	testArgs  = detect.String(os.Getenv("TEST_ARGS"), "./...")
 )
 
 func panicIf(err error) {
@@ -56,41 +64,35 @@ func runCmd(name string, args ...string) error {
 	return cmd.Run()
 }
 
-func doAppEngineBuild() {
+func fullBuild() {
+	var err error
+
 	log.Println("glitch: building")
-	if err := runCmd("goapp", "build", packages); err != nil {
-		return
+	if err = runCmd("go", "build", buildArgs); err == nil {
+		log.Println("glitch: build OK - vetting")
+
+		if err = runCmd("go", "vet", vetArgs); err == nil {
+			log.Println("glitch: vet OK - testing")
+
+			if err = runCmd("go", "test", testArgs); err == nil {
+				log.Println("glitch: test OK")
+
+				if len(afterAllOk) > 0 {
+					if err = runCmd("bash", "-c", afterAllOk); err != nil {
+						log.Printf("glitch: afterAllOk failed: %v", err)
+					}
+				}
+			}
+		}
 	}
 
-	log.Println("glitch: build OK - testing")
-	if err := runCmd("goapp", "test", packages); err != nil {
-		return
+	if err != nil && len(afterNotOk) > 0 {
+		if err = runCmd("bash", "-c", afterNotOk); err != nil {
+			log.Printf("glitch: afterNotOk failed: %v", err)
+		}
 	}
 
-	log.Println("glitch: test OK - waiting for next build event")
-}
-
-func doStandardBuild() {
-	log.Println("glitch: building")
-	if err := runCmd("go", "build", packages); err != nil {
-		return
-	}
-
-	log.Println("glitch: build OK - vetting")
-	if err := runCmd("go", "vet", packages); err != nil {
-		return
-	}
-
-	log.Println("glitch: vet OK - testing")
-	if err := runCmd("go", "test", packages); err != nil {
-		return
-	}
-
-	log.Println("glitch: test OK - waiting for next build event")
-
-	if len(afterAllOk) > 0 {
-		runCmd("bash", "-c", afterAllOk)
-	}
+	log.Println("glitch: waiting for next build event")
 }
 
 func maybeQueueBuild(path string) {
@@ -200,11 +202,7 @@ func runBuildLoop() {
 		if buildQueued {
 			buildQueued = false
 			clearScrollBuffer()
-			if onAppEngine {
-				doAppEngineBuild()
-			} else {
-				doStandardBuild()
-			}
+			fullBuild()
 		}
 	}
 
@@ -214,9 +212,8 @@ func runBuildLoop() {
 }
 
 func main() {
-	flag.BoolVar(&onAppEngine, "appengine", false, "on appengine")
-	flag.StringVar(&afterAllOk, "after-all-ok", "", "command to run after all OK")
-	flag.StringVar(&packages, "packages", "./...", "packages to test")
+	flag.StringVar(&afterAllOk, "after-all-ok", "", "command to run after build, vet and test succeed")
+	flag.StringVar(&afterNotOk, "after-not-ok", "", "command to run after all OK")
 	flag.Parse()
 
 	wd, err := os.Getwd()
