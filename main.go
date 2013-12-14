@@ -61,7 +61,7 @@ func fullBuild() {
 
 				if len(afterAllOk) > 0 {
 					if err = runCmd("bash", "-c", afterAllOk); err == nil {
-						log.Println("glitch: after-all-ok OK %v")
+						log.Println("glitch: after-all-ok OK")
 					}
 				}
 			}
