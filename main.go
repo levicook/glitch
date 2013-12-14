@@ -39,10 +39,7 @@ func runCmd(name string, args ...string) (err error) {
 	cmd.Stderr = buf
 	cmd.Dir = rootPath
 
-	// go vet doesn't use non zero exits  :(
-	isVet := len(args) > 0 && name == "go" && args[0] == "vet"
-
-	if err = cmd.Run(); err != nil || verbose || isVet {
+	if err = cmd.Run(); err != nil || verbose {
 		print(buf.String())
 	}
 
@@ -63,14 +60,18 @@ func fullBuild() {
 				log.Println("glitch: test OK")
 
 				if len(afterAllOk) > 0 {
-					err = runCmd("bash", "-c", afterAllOk)
+					if err = runCmd("bash", "-c", afterAllOk); err == nil {
+						log.Println("glitch: after-all-ok OK %v")
+					}
 				}
 			}
 		}
 	}
 
 	if err != nil && len(afterNotOk) > 0 {
-		err = runCmd("bash", "-c", afterNotOk)
+		if err = runCmd("bash", "-c", afterNotOk); err == nil {
+			log.Println("glitch: after-not-ok OK")
+		}
 	}
 
 	if err != nil {
