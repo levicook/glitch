@@ -2,22 +2,14 @@ package main
 
 import (
 	"flag"
-	"fmt"
 	"log"
 	"os"
 	"os/exec"
 	"path/filepath"
-	"strings"
 	"time"
 
 	"github.com/howeyc/fsnotify"
 	"github.com/levicook/go-detect"
-)
-
-const (
-	watchFlags = fsnotify.FSN_CREATE |
-		fsnotify.FSN_DELETE |
-		fsnotify.FSN_MODIFY
 )
 
 var (
@@ -26,42 +18,35 @@ var (
 	exitCode = make(chan int)
 	rootPath string
 
-	emptyStruct = struct{}{}
-
-	hasSuffix = strings.HasSuffix
-	contains  = strings.Contains
-
-	sprintf = fmt.Sprintf
-	errorf  = fmt.Errorf
-
-	printf = log.Printf
-
-	afterAllOk string
-	afterNotOk string
-
 	buildQueued = true
 
+	// command line flags we pay attention to
+	afterAllOk string
+	afterNotOk string
+	verbose    bool
+
+	// environment variables we pay attention to
 	buildArgs = detect.String(os.Getenv("BUILD_ARGS"), "./...")
 	vetArgs   = detect.String(os.Getenv("VET_ARGS"), "./...")
 	testArgs  = detect.String(os.Getenv("TEST_ARGS"), "./...")
 )
 
-func panicIf(err error) {
-	if err != nil {
-		panic(err)
-	}
-}
+func runCmd(name string, args ...string) (err error) {
+	buf := new(commandBuffer)
 
-func clearScrollBuffer() {
-	print("\033c")
-}
-
-func runCmd(name string, args ...string) error {
 	cmd := exec.Command(name, args...)
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
+	cmd.Stdout = buf
+	cmd.Stderr = buf
 	cmd.Dir = rootPath
-	return cmd.Run()
+
+	// go vet doesn't use non zero exits  :(
+	isVet := len(args) > 0 && name == "go" && args[0] == "vet"
+
+	if err = cmd.Run(); err != nil || verbose || isVet {
+		print(buf.String())
+	}
+
+	return
 }
 
 func fullBuild() {
@@ -78,21 +63,21 @@ func fullBuild() {
 				log.Println("glitch: test OK")
 
 				if len(afterAllOk) > 0 {
-					if err = runCmd("bash", "-c", afterAllOk); err != nil {
-						log.Printf("glitch: afterAllOk failed: %v", err)
-					}
+					err = runCmd("bash", "-c", afterAllOk)
 				}
 			}
 		}
 	}
 
 	if err != nil && len(afterNotOk) > 0 {
-		if err = runCmd("bash", "-c", afterNotOk); err != nil {
-			log.Printf("glitch: afterNotOk failed: %v", err)
-		}
+		err = runCmd("bash", "-c", afterNotOk)
 	}
 
-	log.Println("glitch: waiting for next build event")
+	if err != nil {
+		log.Println("glitch: failed")
+	} else {
+		log.Println("glitch: all OK")
+	}
 }
 
 func maybeQueueBuild(path string) {
@@ -135,6 +120,7 @@ var (
 )
 
 func watch(dir string) {
+	const watchFlags = fsnotify.FSN_CREATE | fsnotify.FSN_DELETE | fsnotify.FSN_MODIFY
 
 	if _, watching := watched[dir]; watching {
 		return
@@ -214,6 +200,7 @@ func runBuildLoop() {
 func main() {
 	flag.StringVar(&afterAllOk, "after-all-ok", "", "command to run after build, vet and test succeed")
 	flag.StringVar(&afterNotOk, "after-not-ok", "", "command to run after all OK")
+	flag.BoolVar(&verbose, "verbose", false, "be verbose")
 	flag.Parse()
 
 	wd, err := os.Getwd()
