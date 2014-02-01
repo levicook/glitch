@@ -195,11 +195,11 @@ func runBuildLoop() {
 }
 
 func main() {
-	flag.StringVar(&buildArgs, "build", "./...", "arguments passed to `go build`")
-	flag.StringVar(&buildArgs, "vet", "./...", "arguments passed to `go vet`")
-	flag.StringVar(&buildArgs, "test", "./...", "arguments passed to `go test`")
 	flag.StringVar(&afterAllOk, "after-all-ok", "", "command to run after build, vet and test succeed")
 	flag.StringVar(&afterNotOk, "after-not-ok", "", "command to run after all OK")
+	flag.StringVar(&buildArgs, "build", "./...", "arguments passed to `go build`")
+	flag.StringVar(&testArgs, "test", "./...", "arguments passed to `go test`")
+	flag.StringVar(&vetArgs, "vet", "./...", "arguments passed to `go vet`")
 	flag.BoolVar(&verbose, "verbose", false, "be verbose")
 
 	flag.Parse()
