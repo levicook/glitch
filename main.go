@@ -2,14 +2,12 @@ package main
 
 import (
 	"flag"
+	"github.com/howeyc/fsnotify"
 	"log"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"time"
-
-	"github.com/howeyc/fsnotify"
-	"github.com/levicook/go-detect"
 )
 
 var (
@@ -20,15 +18,13 @@ var (
 
 	buildQueued = true
 
-	// command line flags we pay attention to
+	// flags
 	afterAllOk string
 	afterNotOk string
 	verbose    bool
-
-	// environment variables we pay attention to
-	buildArgs = detect.String(os.Getenv("BUILD_ARGS"), "./...")
-	vetArgs   = detect.String(os.Getenv("VET_ARGS"), "./...")
-	testArgs  = detect.String(os.Getenv("TEST_ARGS"), "./...")
+	buildArgs  string
+	vetArgs    string
+	testArgs   string
 )
 
 func runCmd(name string, args ...string) (err error) {
@@ -199,9 +195,13 @@ func runBuildLoop() {
 }
 
 func main() {
+	flag.StringVar(&buildArgs, "build", "./...", "arguments passed to `go build`")
+	flag.StringVar(&buildArgs, "vet", "./...", "arguments passed to `go vet`")
+	flag.StringVar(&buildArgs, "test", "./...", "arguments passed to `go test`")
 	flag.StringVar(&afterAllOk, "after-all-ok", "", "command to run after build, vet and test succeed")
 	flag.StringVar(&afterNotOk, "after-not-ok", "", "command to run after all OK")
 	flag.BoolVar(&verbose, "verbose", false, "be verbose")
+
 	flag.Parse()
 
 	wd, err := os.Getwd()
