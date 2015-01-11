@@ -13,6 +13,7 @@ import (
 var (
 	watcher  *fsnotify.Watcher
 	watched  = make(map[string]struct{})
+	mtimes   = make(map[string]time.Time)
 	exitCode = make(chan int)
 	rootPath string
 
@@ -78,7 +79,22 @@ func fullBuild() {
 }
 
 func maybeQueueBuild(path string) {
-	buildQueued = hasSuffix(path, ".go")
+	if !hasSuffix(path, ".go") {
+		return
+	}
+
+	// Check whether the modified time has actually changed. This is
+	// useful on systems that may emit multiple change events for a
+	// single change (e.g. OSX + Spotlight)
+	fi, err := os.Stat(path)
+	if err == nil {
+		mtime := fi.ModTime()
+		lasttime := mtimes[path]
+		if !mtime.Equal(lasttime) {
+			mtimes[path] = mtime
+			buildQueued = true
+		}
+	}
 }
 
 func handleCreate(path string) {
