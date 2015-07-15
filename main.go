@@ -2,12 +2,13 @@ package main
 
 import (
 	"flag"
-	"github.com/howeyc/fsnotify"
 	"log"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"time"
+
+	"github.com/howeyc/fsnotify"
 )
 
 var (
@@ -19,6 +20,7 @@ var (
 	buildQueued = true
 
 	// flags
+	useGodeps  bool
 	afterAllOk string
 	afterNotOk string
 	verbose    bool
@@ -52,7 +54,12 @@ func fullBuild() {
 		if err = runCmd("go", "vet", vetArgs); err == nil {
 			log.Println("glitch: vet OK - testing")
 
-			if err = runCmd("go", "test", testArgs); err == nil {
+			if useGodeps {
+				err = runCmd("godep", "go", "test", testArgs)
+			} else {
+				err = runCmd("go", "test", testArgs)
+			}
+			if err == nil {
 				log.Println("glitch: test OK")
 
 				if len(afterAllOk) > 0 {
@@ -200,6 +207,7 @@ func main() {
 	flag.StringVar(&buildArgs, "build", "./...", "arguments passed to `go build`")
 	flag.StringVar(&testArgs, "test", "./...", "arguments passed to `go test`")
 	flag.StringVar(&vetArgs, "vet", "./...", "arguments passed to `go vet`")
+	flag.BoolVar(&useGodeps, "use-godeps", false, "use godep for testing")
 	flag.BoolVar(&verbose, "verbose", false, "be verbose")
 
 	flag.Parse()
