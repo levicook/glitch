@@ -108,6 +108,7 @@ func fullBuild() {
 
 	if err != nil {
 		log.Println("glitch: failed")
+		log.Print("\a")
 	} else {
 		log.Println("glitch: all OK")
 	}
