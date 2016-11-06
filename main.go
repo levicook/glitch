@@ -6,6 +6,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/howeyc/fsnotify"
@@ -21,17 +22,18 @@ var (
 	buildQueued = true
 
 	// flags
-	useGodeps  bool
-	afterAllOk string
-	afterNotOk string
-	verbose    bool
-	buildArgs  string
-	vetArgs    string
-	testArgs   string
+	useGodeps    bool
+	afterAllOk   string
+	afterNotOk   string
+	verbose      bool
+	buildArgs    string
+	vetArgs      string
+	testArgs     string
+	ignoreVendor bool
 )
 
-func runCmd(name string, args ...string) (err error) {
-	buf := new(commandBuffer)
+func runCmd(name string, args ...string) (buf *commandBuffer, err error) {
+	buf = new(commandBuffer)
 
 	cmd := exec.Command(name, args...)
 	cmd.Stdout = buf
@@ -45,26 +47,52 @@ func runCmd(name string, args ...string) (err error) {
 	return
 }
 
+func getPackages() []string {
+	output, err := runCmd("go", "list", "./...")
+	if err != nil {
+		return []string{}
+	}
+
+	f := strings.Split(output.String(), "\n")
+	var files []string
+
+	for _, file := range f {
+		if !strings.Contains(file, "/vendor") && file != "\n" {
+			files = append(files, strings.TrimSpace(file))
+		}
+	}
+
+	return files
+}
+
 func fullBuild() {
 	var err error
+	vetArrayArgs := []string{"vet"}
+	testArrayArgs := []string{"test"}
+
+	if ignoreVendor == true {
+		packages := getPackages()
+		vetArrayArgs = append(vetArrayArgs, packages...)
+		testArrayArgs = append(testArrayArgs, packages...)
+	}
 
 	log.Println("glitch: building")
-	if err = runCmd("go", "build", buildArgs); err == nil {
+	if _, err = runCmd("go", "build", buildArgs); err == nil {
 		log.Println("glitch: build OK - vetting")
 
-		if err = runCmd("go", "vet", vetArgs); err == nil {
+		if _, err = runCmd("go", vetArrayArgs...); err == nil {
 			log.Println("glitch: vet OK - testing")
 
 			if useGodeps {
-				err = runCmd("godep", "go", "test", testArgs)
+				_, err = runCmd("godep", "go", "test", testArgs)
 			} else {
-				err = runCmd("go", "test", testArgs)
+				_, err = runCmd("go", testArrayArgs...)
 			}
 			if err == nil {
 				log.Println("glitch: test OK")
 
 				if len(afterAllOk) > 0 {
-					if err = runCmd("bash", "-c", afterAllOk); err == nil {
+					if _, err = runCmd("bash", "-c", afterAllOk); err == nil {
 						log.Println("glitch: after-all-ok OK")
 					}
 				}
@@ -73,7 +101,7 @@ func fullBuild() {
 	}
 
 	if err != nil && len(afterNotOk) > 0 {
-		if err = runCmd("bash", "-c", afterNotOk); err == nil {
+		if _, err = runCmd("bash", "-c", afterNotOk); err == nil {
 			log.Println("glitch: after-not-ok OK")
 		}
 	}
@@ -181,7 +209,7 @@ func periodicallyLogWatchedCount() {
 func periodicallyLogWatchedPaths() {
 	logWatchedPaths := func() {
 		log.Printf("glitch: watching: %v paths", len(watched))
-		for path, _ := range watched {
+		for path := range watched {
 			log.Println("glitch: watching:", path)
 		}
 	}
@@ -225,6 +253,7 @@ func main() {
 	flag.StringVar(&vetArgs, "vet", "./...", "arguments passed to `go vet`")
 	flag.BoolVar(&useGodeps, "use-godeps", false, "use godep for testing")
 	flag.BoolVar(&verbose, "verbose", false, "be verbose")
+	flag.BoolVar(&ignoreVendor, "exclude-vendor", false, "excludes vendor folder from vet and test")
 
 	flag.Parse()
 
